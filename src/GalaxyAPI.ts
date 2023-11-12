@@ -1,4 +1,4 @@
-import { ExcalidrawElement } from "@excalidraw/excalidraw/types/element/types";
+import { ExcalidrawElement, ExcalidrawTextElement } from "@excalidraw/excalidraw/types/element/types";
 import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import { nanoid } from "nanoid";
 import { NotificationProvider } from "./NotificationContext";
@@ -49,12 +49,14 @@ class GalaxyAPI {
     this.registerMacro("cat", this.defaultCatMacro);
     this.registerMacro("ls", this.defaultLsMacro);
     this.registerMacro("jump", this.defaultJumpMacro);
+    this.registerMacro("html", this.defaultHtmlMacro);
     // this.registerMacro("gpt3", this.defaultGpt3Macro);
     // this.registerMacro("draw", this.defaultSdMacro);
 
     this.galaxyContract = '5E1zfVZmokEX29W9xVzMYJAzvwnXWE7AVcP3d1rXzWhC4sxi';
     this.galaxyMetadata = 'https://raw.githubusercontent.com/7flash/galaxy-polkadot-contract/main/galaxy.json';
 
+    window.webuiCallbacks = {};
     window.inputData = {};
     window.taskId = 0;
   }
@@ -868,6 +870,17 @@ return text;
         reject(`Error in defaultSaveMacro: ${error}`);
       }
     });
+  }
+  private async defaultHtmlMacro(input: ExcalidrawTextElement): Promise<string> {
+    const fit = input.text;
+    const kit = 'html';
+    const nit = nanoid();
+    const dit = await new Promise(resolve => {
+      window.webuiCallbacks[nit] = resolve;
+      window.webui.setMemoryFile(fit, kit, nit);
+    })
+    const pit = `${window.location.origin}/${dit}.${kit}`;
+    return pit;
   }
   private async defaultPublishMacro(input: ExcalidrawElement): Promise<ExcalidrawElement[]> {
     const galaxyContractAddress = this.galaxyContract;

@@ -50,11 +50,12 @@ export default function(
 						if (arrow?.type === 'arrow' && arrow?.startBinding?.elementId === element.id) {
 							let label = getArrowLabel(arrow, elementMap);
 							let macroName = label.includes('(') ? label.substr(0, label.indexOf('(')) : label;
+							const outputEl = elements.find(it => it.id == arrow.endBinding?.elementId);
 							if (macroName) {
 								if (window.ga.getMacro(macroName)) {
 									addMacro(macroName, arrow, boundEl);
 								} else {
-									const outputEl = elements.find(it => it.id == arrow.endBinding?.elementId);
+
 									if (outputEl?.type == 'text') {
 										if (macroName.startsWith('/')) {
 											if (macroName.includes('.')) {
@@ -75,9 +76,12 @@ export default function(
 									}
 									// label = `gpt4("${label}")`;
 								}
-
 							} else {
-								addMacro('prompt', arrow);
+								if (element?.type == 'text' && outputEl?.type == 'embeddable') {
+									addMacro('html', arrow);
+								} else if (outputEl?.type == 'text') {
+									addMacro('prompt', arrow);
+								}
 							}
 						}
 					}

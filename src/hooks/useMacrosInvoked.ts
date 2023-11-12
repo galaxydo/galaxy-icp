@@ -6,9 +6,9 @@ export default function(excalidrawRef, selectedMacros) {
 		if (!ea) return;
 
 		let m = selectedMacros?.get(macroName);
-		if (macroCaption) m = m.filter(it => it.caption == macroCaption);
+		if (macroCaption) m = m.filter(it => !it.caption || it.caption == macroCaption);
 
-		if (!m) return;
+		if (m.length == 0) return;
 
 		const updateOutputText = (outputEl, text: string) => {
 			console.log('!', 'updateOutputText', outputEl.id, text);
