@@ -2,6 +2,7 @@ import { ExcalidrawElement, ExcalidrawTextElement } from "@excalidraw/excalidraw
 import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import { nanoid } from "nanoid";
 import { NotificationProvider } from "./NotificationContext";
+import { DataURL } from "@excalidraw/excalidraw/types/types";
 
 
 
@@ -791,9 +792,9 @@ return text;
               // files: window.ea.getFiles(),
             }
 
-            const escapedSceneName = sceneName.replace(/'/g, "\\'");
-            const escapedSceneJSON = JSON.stringify(scene).replace(/'/g, "\\'");
-            console.log('escapedSceneJSON', escapedSceneJSON);
+            // const escapedSceneName = sceneName.replace(/'/g, "\\'");
+            // const escapedSceneJSON = JSON.stringify(scene).replace(/'/g, "\\'");
+            // console.log('escapedSceneJSON', escapedSceneJSON);
 
             //             const denoScript = `
             //         async function saveScene(input) {
@@ -807,37 +808,69 @@ return text;
             // `;
 
             const denoScript = `
-              async function saveScene() {
-  const scene = JSON.parse(${JSON.stringify(escapedSceneJSON)});
+async function saveScene() {
+ const {
+    decodeBase64,
+    encodeBase64,
+  } = await import("https://deno.land/std@0.206.0/encoding/base64.ts");
+
+const bufferSize = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'")).length');
+console.log('bufferSize', bufferSize);
+const elements = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'"))', { bufferSize: Number.parseInt(bufferSize) + 1 });
+
+            const scene = {
+              elements: JSON.parse(elements),
+            };
 
   const encoder = new TextEncoder();
+  let totalSize = 0;
+
+  const fileIds = [...new Set(scene.elements.filter(function(it) { return it.type === 'image'; }).map(function(it) { return it.fileId; }))];
+
+  for (var i = 0; i < fileIds.length; i++) {
+    var fileId = fileIds[i];
+    try {
+            const bufferSize = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL.length;');
+            console.log('bufferSize', bufferSize);
+
+      var fileDataURL = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL;', { bufferSize: Number.parseInt(bufferSize) + 1 });
+
+      var base64Index = fileDataURL.indexOf(';base64,');
+        if (base64Index === -1) {
+          throw new Error('Base64 data not found in data URL');
+        }
+      var base64Data = fileDataURL.substring(base64Index + 8);
+  console.log('base64Data', base64Data);
             
-            const fileIds = [...new Set(scene.elements.filter(it => it.type == 'image').map(it => it.fileId))];
-            
-            fileIds.forEach(async (fileId) => {
-    const fileDataURL = await firstWindow.script("return window.ea.getFiles()[fileId].dataURL;");
+                  var decodedData = decodeBase64(base64Data);
+      totalSize += decodedData.byteLength;
 
-    // Remove data URL prefix and convert from base64 to a Uint8Array
-    const base64Data = fileDataURL.split(';base64,').pop();
-    const decodedData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+      var fileType = fileDataURL.substring(11, base64Index);
 
-    // Extract file type from data URL
-    const fileType = fileDataURL.split(';')[0].split('/')[1];
+      await Deno.writeFile(galaxyPath + '/' + fileId + '.' + fileType, decodedData);
+    } catch (error) {
+      console.error('Error saving image with fileId:', fileId, error);
+    }
+  }
 
-    await Deno.writeFile(galaxyPath + '/' + fileId + '.' + fileType, decodedData);
-                                  
-            });
-            const sceneData = JSON.stringify(scene);
-            await Deno.writeTextFile(galaxyPath + '/' + ${sceneName} + '.json', sceneData); return fileIds.length;
-              }
+  var sceneData = JSON.stringify(scene, null, 2);
+  var encodedSceneData = encoder.encode(sceneData);
+  totalSize += encodedSceneData.byteLength;
+  await Deno.writeTextFile(galaxyPath + '/' + "${sceneName}" + '.json', sceneData);
+
+  return totalSize;
+               }
             `;
 
             try {
-              const result = await this.executeDeno(
-                denoScript,
-              );
 
-              const updatedText = `${sceneName} (${result} bytes)`;
+              const nit = nanoid();
+              const result = await new Promise(resolve => {
+                window.webuiCallbacks[nit] = resolve;
+                window.webui.executeDeno(denoScript, JSON.stringify(input), nit);
+              })
+              const bytes = JSON.parse(result).result;
+              const updatedText = `${sceneName} (${bytes} bytes)`;
               // const updatedText = `Frame ${input.id} saved as "${sceneName}" at ${new Date().toTimeString()}`;
               return resolve(updatedText);
             } catch (err) {
@@ -878,7 +911,7 @@ return text;
     const dit = await new Promise(resolve => {
       window.webuiCallbacks[nit] = resolve;
       window.webui.setMemoryFile(fit, kit, nit);
-    })
+    });
     const pit = `${window.location.origin}/${dit}.${kit}`;
     return pit;
   }
@@ -1048,24 +1081,73 @@ return text;
 
             } else {
               const denoScript = `
-        async function openScene(input) {
-          const kvBlob = await import('https://deno.land/x/kv_toolbox/blob.ts');
+async function openScene() {
+ const {
+    decodeBase64,
+    encodeBase64,
+  } = await import("https://deno.land/std@0.206.0/encoding/base64.ts");
 
-  const kv = await Deno.openKv();
-  const layerBinary = await kvBlob.get(kv, ["layers", "${link}"]);
-  await kv.close();
-              
-const layerStr = new TextDecoder().decode(layerBinary);
+  const sceneFilePath = galaxyPath + '/' + "${link}" + '.json';
+    const sceneData = await Deno.readTextFile(sceneFilePath);
+    const scene = JSON.parse(sceneData);
 
-                return layerStr;
+    const fileIds = [...new Set(scene.elements.filter(function(it) { return it.type === 'image'; }).map(function(it) { return it.fileId; }))];
+    const imageFilesData = {};
+
+  const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'];
+
+    for (const fileId of fileIds) {
+      let imageData = null;
+      let dataURL = '';
+      let fileType = '';
+      let created = 0;
+      let lastRetrieved = 0;
+                
+      for (const extension of imageExtensions) {
+        const imageFilePath = galaxyPath + '/' + fileId + '.' + extension;
+        console.log('imageFilePath', imageFilePath);
+        try {
+          imageData = await Deno.readFile(imageFilePath);
+        } catch (_) {
+          continue;
         }
-`;
+
+        if (imageData) {
+          fileType = extension;
+          const { atime, mtime } = await Deno.stat(imageFilePath);
+          created = mtime / 1;
+          lastRetrieved = mtime / 1;
+          dataURL = encodeBase64(imageData);
+          break;
+        }
+      }
+
+      if (!imageData) {
+        console.error('Failed to load image for fileId:', fileId);
+      } else {
+              const mimeType = 'image/'+fileType;
+       imageFilesData[fileId] = {
+        id: fileId,
+        mimeType: mimeType,
+              created, lastRetrieved,
+              dataURL: 'data:' + mimeType + ';base64,' + dataURL,
+      };
+              }
+
+    }
+    
+    scene.files = imageFilesData;
+              
+    return scene;
+}`;
 
               try {
-                scene = await this.executeDeno(
-                  denoScript,
-                );
-                scene = JSON.parse(scene);
+                const nit = nanoid();
+                scene = await new Promise(resolve => {
+                  window.webuiCallbacks[nit] = resolve;
+                  window.webui.executeDeno(denoScript, '{}', nit);
+                });
+                scene = JSON.parse(scene).result;
               } catch (err) {
                 console.error(err);
                 return reject("Error executing openScene. " + err?.toString());
@@ -1121,9 +1203,15 @@ const layerStr = new TextDecoder().decode(layerBinary);
               }
             ];
 
-            ea.addFiles(
-              Object.entries(scene.files ?? {}).map(([_, value]) => value),
-            );
+            if (typeof scene.files == 'object') {
+              // Object.entries(scene.files).forEach(async ([_, file]) => {
+              //   const { arrayBuffer, mimeType } = file;
+              //   file.dataURL = await this.getDataURL(arrayBuffer, mimeType);
+              //   delete file.arrayBuffer;
+              //   ea.addFiles([file]);
+              // });
+              ea.addFiles(Object.entries(scene.files).map(([_, it]) => it));
+            }
 
             // If this is in a Promise, resolving it with resultElements
             resolve(resultElements);
@@ -1152,6 +1240,21 @@ const layerStr = new TextDecoder().decode(layerBinary);
       }
     });
   }
+
+  private async getDataURL(
+    file: ArrayBuffer,
+    mimeType: string,
+  ): Promise<DataURL> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataURL = reader.result as DataURL;
+        resolve(dataURL);
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(new Blob([new Uint8Array(file)], { type: mimeType }));
+    });
+  };
 
   private log(message: string, method: string) {
     const formattedMessage = `[GalaxyAPI:: ${method}]- ${message}[${new Date().toISOString()}]`;
