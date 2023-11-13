@@ -51,6 +51,7 @@ class GalaxyAPI {
     this.registerMacro("ls", this.defaultLsMacro);
     this.registerMacro("jump", this.defaultJumpMacro);
     this.registerMacro("html", this.defaultHtmlMacro);
+    this.registerMacro("sh", this.defaultBashMacro);
     // this.registerMacro("gpt3", this.defaultGpt3Macro);
     // this.registerMacro("draw", this.defaultSdMacro);
 
@@ -122,7 +123,6 @@ async function ai() {
 }
     `;
   }
-
 
   private async defaultCatMacro(input: ExcalidrawElement, output: ExcalidrawElement) {
     try {
@@ -617,13 +617,27 @@ return text;
     }
   }
 
-  private async defaultGpt4Macro(input: ExcalidrawElement, argument: string): Promise<string> {
-    const gptScript = this.constructGptScript('gpt-4', window.OPENAI_KEY);
-    const result = await this.executeDeno(
-      gptScript,
-      input,
-      argument,
-    ) as string;
+  private async defaultGpt4Macro(input: ExcalidrawElement): Promise<string> {
+    const model = 'gpt-4-1106-preview';
+    const denoScript = `
+      async function gpt() {
+        const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
+    const openAI = new OpenAI({ apiKey });
+
+    let opts = { model: '', messages: [] };
+    opts.model = '${model}';
+    opts.messages.push({ 'role': 'user', 'content': '${input.text}' });
+    const completion = await openAI.chat.completions.create(opts);
+
+    return completion.choices[0].message.content;
+    }
+    `;
+    const nit = nanoid();
+    let result = await new Promise(resolve => {
+      window.webuiCallbacks[nit] = resolve;
+      window.webui.executeDeno(denoScript, JSON.stringify(input), nit);
+    });
+    result = JSON.parse(result).result;
     return result;
   }
 
@@ -897,6 +911,47 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
         reject(`Error in defaultSaveMacro: ${error}`);
       }
     });
+  }
+
+  private async defaultBashMacro(input: ExcalidrawTextElement): Promise<string> {
+    const nit = nanoid();
+    const dit = await new Promise(resolve => {
+      window.webuiCallbacks[nit] = resolve;
+      window.webui.executeDeno(`
+async function executeBash() {
+    const cit = input.text;
+    console.log('cit', cit);
+
+  const messageBuffer = new TextEncoder().encode(cit);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", messageBuffer);
+  const bit = encodeHex(hashBuffer);
+  const dit = galaxyPath + '/' + bit + '.sh';
+
+    await Deno.writeFile(dit, new TextEncoder().encode(cit));
+console.log('dit', dit);
+    const process = Deno.run({
+      cmd: ["sh", dit],
+      stdout: "piped",
+      stderr: "piped",
+    });
+
+    const { code } = await process.status();
+    if (code === 0) {
+      const rawOutput = await process.output();
+      const output = new TextDecoder().decode(rawOutput);
+      console.log('output', output);
+        return output;
+    } else {
+      const rawError = await process.stderrOutput();
+      const error = new TextDecoder().decode(rawError);
+      console.error('Failed to execute script:', error);
+        return error;
+    }
+
+    }
+        `, JSON.stringify(input), nit);
+    });
+    return JSON.parse(dit).result;
   }
   private async defaultHtmlMacro(input: ExcalidrawTextElement): Promise<string> {
     const fit = input.text;
