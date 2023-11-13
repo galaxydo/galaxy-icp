@@ -809,11 +809,6 @@ return text;
 
             const denoScript = `
 async function saveScene() {
- const {
-    decodeBase64,
-    encodeBase64,
-  } = await import("https://deno.land/std@0.206.0/encoding/base64.ts");
-
 const bufferSize = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'")).length');
 console.log('bufferSize', bufferSize);
 const elements = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'"))', { bufferSize: Number.parseInt(bufferSize) + 1 });
@@ -840,7 +835,6 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
           throw new Error('Base64 data not found in data URL');
         }
       var base64Data = fileDataURL.substring(base64Index + 8);
-  console.log('base64Data', base64Data);
             
                   var decodedData = decodeBase64(base64Data);
       totalSize += decodedData.byteLength;
@@ -1082,11 +1076,6 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
             } else {
               const denoScript = `
 async function openScene() {
- const {
-    decodeBase64,
-    encodeBase64,
-  } = await import("https://deno.land/std@0.206.0/encoding/base64.ts");
-
   const sceneFilePath = galaxyPath + '/' + "${link}" + '.json';
     const sceneData = await Deno.readTextFile(sceneFilePath);
     const scene = JSON.parse(sceneData);
