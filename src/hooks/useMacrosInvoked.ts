@@ -39,12 +39,16 @@ export default function(excalidrawRef, selectedMacros) {
 			console.log('!', 'outputEl', JSON.stringify(outputEl));
 
 			const arrowEl = elementMap[it.arrowId];
+			let label = '';
+			if (arrowEl.boundElements && arrowEl.boundElements[0]?.type == 'text') {
+				label = elementMap[arrowEl.boundElements[0]?.id].text;			
+			}
 
 			try {
 				// const label = getArrowLabel(elementMap[it.arrow], elementMap);
 				let updatedEl = '';
 				try {
-					updatedEl = await window.ga.executeMacro(macroName, inputEl, outputEl);
+					updatedEl = await window.ga.executeMacro(macroName, inputEl, outputEl, label);
 				} catch (err) {
 					ea.setToast({
 						message: `Something went wrong.. ${err.toString()}`,

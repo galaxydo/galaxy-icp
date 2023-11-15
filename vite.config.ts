@@ -9,7 +9,7 @@ export default defineConfig({
     'process.env.VITE_PKG_VERSION': '"1.0"', // JSON.stringify(process.env.VITE_PKG_VERSION),
     'window.EXCALIDRAW_ASSET_PATH': '"/public/"'
   },
-  /*  resolve: {
+    /*  resolve: {
     alias: {
       "@excalidraw/excalidraw": "@galaxydo/excalidraw",
       "@excalidraw/utils": "@galaxydo/excalidraw-utils",

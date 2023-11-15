@@ -3,8 +3,9 @@ import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import { nanoid } from "nanoid";
 import { NotificationProvider } from "./NotificationContext";
 import { DataURL } from "@excalidraw/excalidraw/types/types";
+import {EditorView} from "@codemirror/view"
 
-
+// window.EditorView = EditorView;
 
 type MacroFunction = (
   input: ExcalidrawElement,
@@ -61,6 +62,8 @@ class GalaxyAPI {
     window.webuiCallbacks = {};
     window.inputData = {};
     window.taskId = 0;
+
+    window.EditorView = EditorView;
   }
 
   registerCallback(taskId: string, fn: (denoResult: { success: boolean, data: string }) => void): void {
@@ -88,6 +91,7 @@ class GalaxyAPI {
     name: string,
     input: ExcalidrawElement,
     output: ExcalidrawElement,
+    label: string,
   ): Promise<ExcalidrawElement[]> {
     const macro = this.getMacro(name);
     this.log(`Executing macro "${name}" with input ${JSON.stringify(input)}`, "executeMacro");
@@ -96,7 +100,7 @@ class GalaxyAPI {
       throw new Error(`Macro with name ${name} is not registered.`);
     }
 
-    const result = await macro(input, output);
+    const result = await macro(input, output, label);
     this.log(`Execution result for "${name}": ${JSON.stringify(result)}`, "executeMacro");
 
     return result;
@@ -617,21 +621,42 @@ return text;
     }
   }
 
-  private async defaultGpt4Macro(input: ExcalidrawElement): Promise<string> {
+  private async defaultGpt4Macro(input: ExcalidrawElement, output, label: string): Promise<string> {
     const model = 'gpt-4-1106-preview';
-    const denoScript = `
+    let denoScript;
+    const text = input.text.replace(/'/g, "\\'");
+    if (typeof label == 'string' && label.length > 0) {
+      console.log('with label', label);
+    denoScript = `
       async function gpt() {
         const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
     const openAI = new OpenAI({ apiKey });
 
     let opts = { model: '', messages: [] };
     opts.model = '${model}';
-    opts.messages.push({ 'role': 'user', 'content': '${input.text}' });
+    opts.messages.push({ 'role': 'system', 'content': 'Perform Instruction over given Input, respond with no comments, straight to the point' });
+    opts.messages.push({ 'role': 'user', 'content': 'Input: ${text}' });
+    opts.messages.push({ 'role': 'user', 'content': 'Instruction: ${label}' });
     const completion = await openAI.chat.completions.create(opts);
 
     return completion.choices[0].message.content;
     }
     `;
+    } else {
+        denoScript = `
+      async function gpt() {
+        const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
+    const openAI = new OpenAI({ apiKey });
+
+    let opts = { model: '', messages: [] };
+    opts.model = '${model}';
+    opts.messages.push({ 'role': 'user', 'content': '${text}' });
+    const completion = await openAI.chat.completions.create(opts);
+
+    return completion.choices[0].message.content;
+    }
+    `;
+    }
     const nit = nanoid();
     let result = await new Promise(resolve => {
       window.webuiCallbacks[nit] = resolve;
