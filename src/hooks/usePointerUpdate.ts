@@ -116,7 +116,7 @@ export default function(
 		} else {
 			const anchorArrows = elements.filter(it => it.type == 'arrow' && !it.startBinding && it.boundElements);
 			for (const benit of anchorArrows) {
-				const fenit = benit.boundElements.map(cenit => elements.find(denit => denit.id == cenit.id)).find(cenit => cenit.type == 'text');
+				const fenit = benit.boundElements.map(cenit => elements.find(denit => denit.id == cenit.id)).find(cenit => cenit && cenit.type == 'text');
 				if (fenit && fenit.text) {
 					addMacro(
 						// fenit.text,

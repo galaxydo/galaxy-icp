@@ -40,7 +40,7 @@ export default function(excalidrawRef, selectedMacros) {
 
 			const arrowEl = elementMap[it.arrowId];
 			let label = '';
-			if (arrowEl.boundElements && arrowEl.boundElements[0]?.type == 'text') {
+			if (arrowEl && arrowEl.boundElements && arrowEl.boundElements[0]?.type == 'text') {
 				label = elementMap[arrowEl.boundElements[0]?.id].text;			
 			}
 
@@ -170,7 +170,8 @@ export default function(excalidrawRef, selectedMacros) {
 				}
 				if (elements) {
 					ea.updateScene({
-						elements: elements
+						elements: elements,
+						commitToHistory: true,
 					});
 				}
 				console.log('!', 'els-after', JSON.stringify(ea.getSceneElements().map(it => it.id)));

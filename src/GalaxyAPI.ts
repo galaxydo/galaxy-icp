@@ -3,7 +3,6 @@ import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import { nanoid } from "nanoid";
 import { NotificationProvider } from "./NotificationContext";
 import { DataURL } from "@excalidraw/excalidraw/types/types";
-import {EditorView} from "@codemirror/view"
 
 // window.EditorView = EditorView;
 
@@ -63,7 +62,7 @@ class GalaxyAPI {
     window.inputData = {};
     window.taskId = 0;
 
-    window.EditorView = EditorView;
+    // window.EditorView = EditorView;
   }
 
   registerCallback(taskId: string, fn: (denoResult: { success: boolean, data: string }) => void): void {
@@ -234,6 +233,63 @@ async function ai() {
     }
   }
 
+  private async defaultPlaylistMacro(input: ExcalidrawElement, output: ExcalidrawElement): Promise<string[]> {
+// <script src="https://apis.google.com/js/api.js"></script>
+// <script>
+//   /**
+//    * Sample JavaScript code for youtube.playlists.insert
+//    * See instructions for running APIs Explorer code samples locally:
+//    * https://developers.google.com/explorer-help/code-samples#javascript
+//    */
+
+//   function authenticate() {
+//     return gapi.auth2.getAuthInstance()
+//         .signIn({scope: "https://www.googleapis.com/auth/youtube.force-ssl"})
+//         .then(function() { console.log("Sign-in successful"); },
+//               function(err) { console.error("Error signing in", err); });
+//   }
+//   function loadClient() {
+//     gapi.client.setApiKey("YOUR_API_KEY");
+//     return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
+//         .then(function() { console.log("GAPI client loaded for API"); },
+//               function(err) { console.error("Error loading GAPI client for API", err); });
+//   }
+//   // Make sure the client is loaded and sign-in is complete before calling this method.
+//   function execute() {
+//     return gapi.client.youtube.playlists.insert({
+//       "part": [
+//         "snippet,status"
+//       ],
+//       "resource": {
+//         "snippet": {
+//           "title": "Sample playlist created via API",
+//           "description": "This is a sample playlist description.",
+//           "tags": [
+//             "sample playlist",
+//             "API call"
+//           ],
+//           "defaultLanguage": "en"
+//         },
+//         "status": {
+//           "privacyStatus": "private"
+//         }
+//       }
+//     })
+//         .then(function(response) {
+//                 // Handle the results here (response.result has the parsed body).
+//                 console.log("Response", response);
+//               },
+//               function(err) { console.error("Execute error", err); });
+//   }
+//   gapi.load("client:auth2", function() {
+//     gapi.auth2.init({client_id: "YOUR_CLIENT_ID"});
+//   });
+// </script>
+// <button onclick="authenticate().then(loadClient)">authorize and load</button>
+// <button onclick="execute()">execute</button>
+
+  }
+  
   private async defaultLsMacro(input: ExcalidrawElement, output: ExcalidrawElement): Promise<string[]> {
     const bit = this.getFullTree(input, output);
     // bit.pop();
@@ -392,6 +448,7 @@ async function ai() {
         }])[0].width;
       const weweit = weit / eweit;
       const text = weweit > output.text.length ? '/' + '-'.repeat(weweit) : output.text;
+      // const text = '/' + '-'.repeat(weweit);
       let xaweit = output.width;
       const placeholder = `${text}` // output.text ?? '/-------------';
       for (const vit of nit) {
@@ -425,7 +482,7 @@ async function ai() {
             parentId: qit.id,
           },
           y: qit.y + margin,
-          text: placeholder,
+          text: '/' + '-'.repeat(qit.text.length - 1),
           id: ritId,
           // groupIds: [assit],
         }
@@ -1223,12 +1280,38 @@ async function openScene() {
               }
             }
 
-            const newElements = window.convertToExcalidrawElements(scene.elements.map(it => {
+            const newElementIds = Object.fromEntries(scene.elements.map(it => [it.id, nanoid()]));
+
+            const newElements = scene.elements.map(it => {
+             
+              if (it.boundElements) {
+                it.boundElements.forEach(kit => {
+                  kit.id = newElementIds[kit.id];
+                });
+              }
+              if (it.containerId) {
+                it.containerId = newElementIds[it.containerId];
+              }
+                if (it.startBinding) {
+               
+                  it.startBinding.elementId = newElementIds[it.startBinding.elementId];
+                }
+                if (it.endBinding) {
+                  it.endBinding.elementId = newElementIds[it.endBinding.elementId];
+                }
+              if (it.customData) {
+                if (it.customData.outputTo) {
+                  it.customData.outputTo = newElementIds[it.customData.outputTo];
+                }
+                if (it.customData.parentId) {
+                  it.customData.parentId = newElementIds[it.customData.parentId];
+                }
+              }
               return {
                 ...it,
-                id: nanoid(),
+                id: newElementIds[it.id],
               }
-            }));
+            });
 
             // Extracting the x, y coordinates from the user-defined frame
             const frameX = input.x;
@@ -1253,11 +1336,13 @@ async function openScene() {
             let offsetY = frameY - minY;
 
             // Creating new adjusted elements
-            const adjustedElements = newElements.map(it => ({
-              ...it,
-              x: it.x + offsetX,
-              y: it.y + offsetY,
-            }));
+            const adjustedElements = newElements.map(it => {
+                            return ({
+                ...it,
+                x: it.x + offsetX,
+                y: it.y + offsetY,
+              });
+            });
 
             // Including the user-defined frame with potentially adjusted width and height
             const resultElements = [
