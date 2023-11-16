@@ -135,6 +135,7 @@ export default function(excalidrawRef, selectedMacros) {
 											...sekit,
 											width: it.width,
 											groupIds: it.groupIds,
+											boundElements: it.boundElements,
 											id: it.id,
 										}
 									} else if (it.type == 'embeddable') {
