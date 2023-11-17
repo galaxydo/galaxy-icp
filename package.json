@@ -8,7 +8,7 @@
     "dev-frontend": "vite",
     "excalidraw-build": "cd excalidraw/src/packages/excalidraw && pnpm build:umd",
     "excalidraw-publish": "cd excalidraw/src/packages/excalidraw && node version.js && pnpm publish --no-git-checks",
-    "excalidraw-commit-push": "cd excalidraw && git add . && git commit -m 'up' && git push",
+    "excalidraw-commit-push": "cd excalidraw && git add . && git commit -m '$(pnpm show -r @galaxydo/excalidraw version)' && git push",
     "install-excalidraw": "pnpm i @excalidraw/excalidraw@npm:@galaxydo/excalidraw@$(pnpm show -r @galaxydo/excalidraw version)",
     "push-frontend": "cd dist && git add . && git commit -m 'up' && git push",
     "compile-linux": "cd desktop && deno compile --no-check --allow-all --unstable --target x86_64-unknown-linux-gnu --output ./bin/GalaxyBrowser-linux main.ts -- --stability-api-key=$(cat .stability-key) --openai-key=$(cat .openai-key)",
@@ -26,7 +26,7 @@
   "dependencies": {
     "@dfinity/agent": "^0.19.3",
     "@dfinity/auth-client": "^0.19.3",
-    "@excalidraw/excalidraw": "npm:@galaxydo/excalidraw@0.15.2-8",
+    "@excalidraw/excalidraw": "npm:@galaxydo/excalidraw@0.15.2-9",
     "@galaxydo/excalidraw-utils": "0.1.2-23.8.18",
     "@internet-identity-labs/nfid-sdk-react": "0.0.1-alpha.18",
     "@internet-identity-labs/react-ic-ii-auth": "^0.0.19",

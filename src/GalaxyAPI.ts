@@ -905,10 +905,9 @@ return text;
 
             const denoScript = `
 async function saveScene() {
-const bufferSize = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'")).length');
-console.log('bufferSize', bufferSize);
+const bufferSize = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'")).length.toString()');
+console.log('saveScene bufferSize', bufferSize);
 const elements = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'"))', { bufferSize: Number.parseInt(bufferSize) + 1 });
-
             const scene = {
               elements: JSON.parse(elements),
             };

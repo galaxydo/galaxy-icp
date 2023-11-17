@@ -136,6 +136,7 @@ export default function(excalidrawRef, selectedMacros) {
 											width: it.width,
 											groupIds: it.groupIds,
 											boundElements: it.boundElements,
+											customData: it.customData,
 											id: it.id,
 										}
 									} else if (it.type == 'embeddable') {
