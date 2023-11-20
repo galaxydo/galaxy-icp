@@ -51,6 +51,7 @@ class GalaxyAPI {
     this.registerMacro("ls", this.defaultLsMacro);
     this.registerMacro("jump", this.defaultJumpMacro);
     this.registerMacro("html", this.defaultHtmlMacro);
+    this.registerMacro("VisualAI", this.visualAiMacro);
     this.registerMacro("sh", this.defaultBashMacro);
     // this.registerMacro("gpt3", this.defaultGpt3Macro);
     // this.registerMacro("draw", this.defaultSdMacro);
@@ -690,6 +691,146 @@ return text;
       console.error(err);
       return url;
     }
+  }
+
+  private async youtubeTranscript(input: ExcalidrawElement, output, label: string): Promise<string> {
+    function loadGoogleApiLibrary() {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://apis.google.com/js/api.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    
+    async function initializeClient() {
+      try {
+        // Load the Google API client library
+        await loadGoogleApiLibrary();
+    
+        // Step 2: Initialize the Google API client library
+        await gapi.client.init({
+          'apiKey': 'AIzaSyBxT4EZ44TDgyv_0cM7xbQLjSX2vSSU4Wk', // Replace with your actual API key
+          'clientId': '971263-nsmrbhdrkagi1na5l827ugjvh092mv75.apps.googleusercontent.com', // Replace with your actual client ID
+          'scope': 'https://www.googleapis.com/auth/youtube.readonly', // Adjust scope for what you need
+          'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest']
+        });
+    
+        // Step 3: Authenticate user (can also be triggered by a user action)
+        await gapi.auth2.getAuthInstance().signIn();
+    
+        // Step 4: Make an API call after authentication
+        const response = await gapi.client.youtube.channels.list({
+          'part': 'snippet,contentDetails,statistics',
+          'mine': 'true'
+        });
+        console.log(response.result);
+    
+      } catch (reason) {
+        console.log('Error: ' + reason.result.error.message);
+      }
+    }
+    
+    // Step 5: Load the API client and auth2 library
+    function loadClient() {
+      gapi.load('client:auth2', initializeClient);
+    }
+
+    async function getTranscript(input) {
+      function extractVideoID(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+      }
+  
+  
+   async function getCaptions(apiKey, videoId, languageCode = 'en') {    
+  
+    try {
+      // Get the list of caption tracks
+      const captionsListResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${apiKey}`);
+      const captionsListData = await captionsListResponse.json();
+      const captionTracks = captionsListData.items;
+  
+      const track = captionTracks.find((track) => track.snippet.language === languageCode);
+      if (!track) {
+        console.log('No caption track found for the specified language.');
+        return;
+      }
+  
+      const captionsResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/captions/${track.id}?key=${apiKey}`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/ttml+xml'
+        }
+      });
+      const captionsData = await captionsResponse.text();
+      console.log(captionsData);
+    } catch (error) {
+      console.error('Error fetching captions:', error);
+    }
+  }
+  
+  const youtubeLink = input.text;
+  alert(youtubeLink);
+  const apiKey = '251790971263-nsmrbhdrkagi1na5l827ugjvh092mv75.apps.googleusercontent.com';
+  const videoId = extractVideoID(youtubeLink);
+  
+  if (videoId) {
+    const captions = await getCaptions(apiKey, videoId);
+  } else {
+    console.log('Invalid YouTube URL');
+  }
+  }
+  }
+
+  private async visualAiMacro(input: ExcalidrawElement, output, label: string): Promise<string> {
+    const model = 'gpt-4-vision-preview';
+    const imageUrl = (ea.getFiles()[input.fileId]).dataURL;
+    let denoScript;
+    label = label.replace(/'/g, "\\'");
+    //const text = input.text.replace(/'/g, "\\'");
+    if (typeof label == 'string' && label.length > 0) {
+      console.log('with label', label);
+      denoScript = `
+      async function gpt() {
+        const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
+    const openAI = new OpenAI({ apiKey });
+
+    let opts = { model: '', messages: [] };
+    opts.model = '${model}';
+    opts.messages.push({ 'role': 'system', 'content': 'Perform Instruction over given Input, respond with no comments, straight to the point' });
+    opts.messages.push({ 'role': 'user', 'content': 'Input: ' });
+    opts.messages.push({ 'role': 'user', 'content': [{type: "image_url", image_url: "${imageUrl}"},'Instruction: ${label}'] });
+    console.log('create completion begin', new Date());
+    const completion = await openAI.chat.completions.create(opts);
+    console.log('create completion done', new Date());
+    return completion.choices[0].message.content;
+    }
+    `;
+    } else {
+      denoScript = `
+      async function gpt() {
+        const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
+    const openAI = new OpenAI({ apiKey });
+
+    let opts = { model: '', messages: [] };
+    opts.model = '${model}';
+    opts.messages.push({ 'role': 'user', 'content': { "type": "image_url", "image_url": ${imageUrl} } });
+    const completion = await openAI.chat.completions.create(opts);
+
+    return completion.choices[0].message.content;
+    }
+    `;
+    }
+    const nit = nanoid();
+    let result = await new Promise(resolve => {
+      window.webuiCallbacks[nit] = resolve;
+      window.webui.executeDeno(denoScript, JSON.stringify(input), nit);
+    });
+    result = JSON.parse(result).result;
+    return result;
   }
 
   private async defaultGpt4Macro(input: ExcalidrawElement, output, label: string): Promise<string> {
