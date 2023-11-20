@@ -139,7 +139,14 @@ async function ai() {
       //     return true;
       //   }
       // })
-      return rit;
+      console.log('rit length', rit.length);
+      if (rit.length == 0) {
+        return 'empty file';
+      } else if (rit.length > 10000 && !(cit.endsWith('.ts'))) {
+        return `(...${rit.length} symbols)`
+      } else {
+        return rit;
+      }
     } catch (err) {
       console.error(err);
       return 'empty';
@@ -234,62 +241,62 @@ async function ai() {
   }
 
   private async defaultPlaylistMacro(input: ExcalidrawElement, output: ExcalidrawElement): Promise<string[]> {
-// <script src="https://apis.google.com/js/api.js"></script>
-// <script>
-//   /**
-//    * Sample JavaScript code for youtube.playlists.insert
-//    * See instructions for running APIs Explorer code samples locally:
-//    * https://developers.google.com/explorer-help/code-samples#javascript
-//    */
+    // <script src="https://apis.google.com/js/api.js"></script>
+    // <script>
+    //   /**
+    //    * Sample JavaScript code for youtube.playlists.insert
+    //    * See instructions for running APIs Explorer code samples locally:
+    //    * https://developers.google.com/explorer-help/code-samples#javascript
+    //    */
 
-//   function authenticate() {
-//     return gapi.auth2.getAuthInstance()
-//         .signIn({scope: "https://www.googleapis.com/auth/youtube.force-ssl"})
-//         .then(function() { console.log("Sign-in successful"); },
-//               function(err) { console.error("Error signing in", err); });
-//   }
-//   function loadClient() {
-//     gapi.client.setApiKey("YOUR_API_KEY");
-//     return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
-//         .then(function() { console.log("GAPI client loaded for API"); },
-//               function(err) { console.error("Error loading GAPI client for API", err); });
-//   }
-//   // Make sure the client is loaded and sign-in is complete before calling this method.
-//   function execute() {
-//     return gapi.client.youtube.playlists.insert({
-//       "part": [
-//         "snippet,status"
-//       ],
-//       "resource": {
-//         "snippet": {
-//           "title": "Sample playlist created via API",
-//           "description": "This is a sample playlist description.",
-//           "tags": [
-//             "sample playlist",
-//             "API call"
-//           ],
-//           "defaultLanguage": "en"
-//         },
-//         "status": {
-//           "privacyStatus": "private"
-//         }
-//       }
-//     })
-//         .then(function(response) {
-//                 // Handle the results here (response.result has the parsed body).
-//                 console.log("Response", response);
-//               },
-//               function(err) { console.error("Execute error", err); });
-//   }
-//   gapi.load("client:auth2", function() {
-//     gapi.auth2.init({client_id: "YOUR_CLIENT_ID"});
-//   });
-// </script>
-// <button onclick="authenticate().then(loadClient)">authorize and load</button>
-// <button onclick="execute()">execute</button>
+    //   function authenticate() {
+    //     return gapi.auth2.getAuthInstance()
+    //         .signIn({scope: "https://www.googleapis.com/auth/youtube.force-ssl"})
+    //         .then(function() { console.log("Sign-in successful"); },
+    //               function(err) { console.error("Error signing in", err); });
+    //   }
+    //   function loadClient() {
+    //     gapi.client.setApiKey("YOUR_API_KEY");
+    //     return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
+    //         .then(function() { console.log("GAPI client loaded for API"); },
+    //               function(err) { console.error("Error loading GAPI client for API", err); });
+    //   }
+    //   // Make sure the client is loaded and sign-in is complete before calling this method.
+    //   function execute() {
+    //     return gapi.client.youtube.playlists.insert({
+    //       "part": [
+    //         "snippet,status"
+    //       ],
+    //       "resource": {
+    //         "snippet": {
+    //           "title": "Sample playlist created via API",
+    //           "description": "This is a sample playlist description.",
+    //           "tags": [
+    //             "sample playlist",
+    //             "API call"
+    //           ],
+    //           "defaultLanguage": "en"
+    //         },
+    //         "status": {
+    //           "privacyStatus": "private"
+    //         }
+    //       }
+    //     })
+    //         .then(function(response) {
+    //                 // Handle the results here (response.result has the parsed body).
+    //                 console.log("Response", response);
+    //               },
+    //               function(err) { console.error("Execute error", err); });
+    //   }
+    //   gapi.load("client:auth2", function() {
+    //     gapi.auth2.init({client_id: "YOUR_CLIENT_ID"});
+    //   });
+    // </script>
+    // <button onclick="authenticate().then(loadClient)">authorize and load</button>
+    // <button onclick="execute()">execute</button>
 
   }
-  
+
   private async defaultLsMacro(input: ExcalidrawElement, output: ExcalidrawElement): Promise<string[]> {
     const bit = this.getFullTree(input, output);
     // bit.pop();
@@ -372,6 +379,7 @@ async function ai() {
             outputTo: litId,
             parentId: output.id,
           },
+          frameId: output.frameId,
         };
         const akit = window.convertToExcalidrawElements([kit])[0];
         const lit = {
@@ -383,6 +391,7 @@ async function ai() {
           groupIds: [...groupIds, igit],
           text: `${fit.isFile ? "<...file...content...here>" : "[--folder--]"}`,
           fontSize: akit.fontSize > 2 ? akit.fontSize - 1 : 2,
+          frameId: output.frameId,
         }
         const alit = window.convertToExcalidrawElements([lit])[0];
         const wit = {
@@ -450,7 +459,9 @@ async function ai() {
       const text = weweit > output.text.length ? '/' + '-'.repeat(weweit) : output.text;
       // const text = '/' + '-'.repeat(weweit);
       let xaweit = output.width;
+      let exaweit = 0;
       const placeholder = `${text}` // output.text ?? '/-------------';
+      const aheit = output.height * 4;
       for (const vit of nit) {
         const ritId = nanoid();
         const assit = nanoid();
@@ -462,8 +473,8 @@ async function ai() {
           width: output.width,
           height: output.height,
           fontSize: output.fontSize,
-          x: output.x + weit + xaweit,
-          y: output.y,
+          x: output.x + exaweit,// + weit + xaweit,
+          y: output.y + aheit,
           customData: {
             macros: {
               ls: true,
@@ -472,9 +483,11 @@ async function ai() {
             parentId: output.id,
           },
           groupIds: [assit],
+          frameId: output.frameId,
           // groupIds: [ugit],
         };
         xaweit += qit.width;
+        exaweit += qit.width;
         zit.push(qit);
         const rit = {
           ...qit,
@@ -484,6 +497,7 @@ async function ai() {
           y: qit.y + margin,
           text: '/' + '-'.repeat(qit.text.length - 1),
           id: ritId,
+          frameId: output.frameId,
           // groupIds: [assit],
         }
         zit.push(rit);
@@ -681,10 +695,11 @@ return text;
   private async defaultGpt4Macro(input: ExcalidrawElement, output, label: string): Promise<string> {
     const model = 'gpt-4-1106-preview';
     let denoScript;
+    label = label.replace(/'/g, "\\'");
     const text = input.text.replace(/'/g, "\\'");
     if (typeof label == 'string' && label.length > 0) {
       console.log('with label', label);
-    denoScript = `
+      denoScript = `
       async function gpt() {
         const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
     const openAI = new OpenAI({ apiKey });
@@ -694,13 +709,14 @@ return text;
     opts.messages.push({ 'role': 'system', 'content': 'Perform Instruction over given Input, respond with no comments, straight to the point' });
     opts.messages.push({ 'role': 'user', 'content': 'Input: ${text}' });
     opts.messages.push({ 'role': 'user', 'content': 'Instruction: ${label}' });
+    console.log('create completion begin', new Date());
     const completion = await openAI.chat.completions.create(opts);
-
+    console.log('create completion done', new Date());
     return completion.choices[0].message.content;
     }
     `;
     } else {
-        denoScript = `
+      denoScript = `
       async function gpt() {
         const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
     const openAI = new OpenAI({ apiKey });
@@ -905,7 +921,9 @@ return text;
 
             const denoScript = `
 async function saveScene() {
-const bufferSize = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'")).length.toString()');
+let bufferSize = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'")).length.toString()');
+bufferSize *= 4;
+bufferSize += 4;
 console.log('saveScene bufferSize', bufferSize);
 const elements = await firstWindow.script('return JSON.stringify(window.ea.getSceneElements().filter(it => it.frameId == "'+input.id+'"))', { bufferSize: Number.parseInt(bufferSize) + 1 });
             const scene = {
@@ -919,9 +937,13 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
 
   for (var i = 0; i < fileIds.length; i++) {
     var fileId = fileIds[i];
+        const existingOne = await Deno.stat(GALAXY_PATH + '/' + fileId + '.png');
+        if (existingOne && existingOne.isFile) continue;
     try {
-            const bufferSize = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL.length;');
-            console.log('bufferSize', bufferSize);
+            let bufferSize = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL.length;');
+            bufferSize *= 4;
+            bufferSize += 4;            
+                        console.log('bufferSize', bufferSize);
 
       var fileDataURL = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL;', { bufferSize: Number.parseInt(bufferSize) + 1 });
 
@@ -1036,6 +1058,7 @@ console.log('dit', dit);
   }
   private async defaultHtmlMacro(input: ExcalidrawTextElement): Promise<string> {
     const fit = input.text;
+    if (fit.startsWith('https://')) return fit;
     const kit = 'html';
     const nit = nanoid();
     const dit = await new Promise(resolve => {
@@ -1156,8 +1179,14 @@ console.log('dit', dit);
         // Function to handle opening from Galaxy Link
         const handleOpenFromGalaxyLink = async () => {
           try {
-            if (!link) throw "Galaxy link not provided.";
-
+            if (!link) {
+              link = input.name;
+            }
+            
+            if (!link) {
+              throw "Galaxy link not provided.";
+            }
+            
             this.log('! link 1 ' + link, 'open');
 
             let scene;
@@ -1213,8 +1242,18 @@ console.log('dit', dit);
               const denoScript = `
 async function openScene() {
   const sceneFilePath = galaxyPath + '/' + "${link}" + '.json';
-    const sceneData = await Deno.readTextFile(sceneFilePath);
-    const scene = JSON.parse(sceneData);
+    console.log('opening local scene.. ', sceneFilePath);
+              const sceneData = await Deno.readTextFile(sceneFilePath);
+    if (!sceneData) throw 'Local Scene not found';
+    const sceneElements = JSON.parse(sceneData);
+    let scene;
+    if (sceneElements instanceof Array) {
+    scene = { elements: sceneElements };            
+              } else if (typeof sceneElements == 'object') {
+                scene = sceneElements;
+              }
+    
+    if (!scene) throw 'Invalid file format';
 
     const fileIds = [...new Set(scene.elements.filter(function(it) { return it.type === 'image'; }).map(function(it) { return it.fileId; }))];
     const imageFilesData = {};
@@ -1282,7 +1321,7 @@ async function openScene() {
             const newElementIds = Object.fromEntries(scene.elements.map(it => [it.id, nanoid()]));
 
             const newElements = scene.elements.map(it => {
-             
+
               if (it.boundElements) {
                 it.boundElements.forEach(kit => {
                   kit.id = newElementIds[kit.id];
@@ -1291,13 +1330,13 @@ async function openScene() {
               if (it.containerId) {
                 it.containerId = newElementIds[it.containerId];
               }
-                if (it.startBinding) {
-               
-                  it.startBinding.elementId = newElementIds[it.startBinding.elementId];
-                }
-                if (it.endBinding) {
-                  it.endBinding.elementId = newElementIds[it.endBinding.elementId];
-                }
+              if (it.startBinding) {
+
+                it.startBinding.elementId = newElementIds[it.startBinding.elementId];
+              }
+              if (it.endBinding) {
+                it.endBinding.elementId = newElementIds[it.endBinding.elementId];
+              }
               if (it.customData) {
                 if (it.customData.outputTo) {
                   it.customData.outputTo = newElementIds[it.customData.outputTo];
@@ -1336,7 +1375,7 @@ async function openScene() {
 
             // Creating new adjusted elements
             const adjustedElements = newElements.map(it => {
-                            return ({
+              return ({
                 ...it,
                 x: it.x + offsetX,
                 y: it.y + offsetY,

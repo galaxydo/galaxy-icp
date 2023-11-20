@@ -31,7 +31,7 @@ export default function(excalidrawRef, selectedMacros) {
 		const elementMap = Object.fromEntries(ea.getSceneElements().map(e => [e.id, e]));
 
 		for (const it of m) {
-			const inputEl = elementMap[it.inputFrom]; // ea.getSceneElements().find(jt => jt.id === it.inputFrom);
+			let inputEl = elementMap[it.inputFrom]; // ea.getSceneElements().find(jt => jt.id === it.inputFrom);
 			if (!inputEl && it.name != 'jump') throw 'no input element';
 
 			let outputEl = elementMap[it.outputTo]; // ea.getSceneElements().find(jt => jt.id === it.outputTo);
@@ -42,6 +42,16 @@ export default function(excalidrawRef, selectedMacros) {
 			let label = '';
 			if (arrowEl && arrowEl.boundElements && arrowEl.boundElements[0]?.type == 'text') {
 				label = elementMap[arrowEl.boundElements[0]?.id].text;			
+			}
+
+			if (inputEl.type == 'rectangle') {
+				const bit = inputEl.boundElements.find(cit => cit.type == 'text');
+				if (bit) {
+					const dit = elementMap[bit.id];
+					if (dit) {
+						inputEl = dit;
+					}
+				}
 			}
 
 			try {
