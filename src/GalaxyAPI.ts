@@ -3,6 +3,7 @@ import { convertToExcalidrawElements } from "@excalidraw/excalidraw";
 import { nanoid } from "nanoid";
 import { NotificationProvider } from "./NotificationContext";
 import { DataURL } from "@excalidraw/excalidraw/types/types";
+import gitfred from 'gitfred';
 
 // window.EditorView = EditorView;
 
@@ -31,6 +32,8 @@ class GalaxyAPI {
   private galaxyMetadata: string;
 
   constructor() {
+    window.gitfred = gitfred;
+    
     this.macros = {};
     this.callbacks = {};
     this.log("Initialized.", "constructor");
@@ -54,6 +57,8 @@ class GalaxyAPI {
     this.registerMacro("sh", this.defaultBashMacro);
     // this.registerMacro("gpt3", this.defaultGpt3Macro);
     // this.registerMacro("draw", this.defaultSdMacro);
+
+    // TODO: load from https://github.com/galaxydo/galaxy-macros/tree/main
 
     this.galaxyContract = '5E1zfVZmokEX29W9xVzMYJAzvwnXWE7AVcP3d1rXzWhC4sxi';
     this.galaxyMetadata = 'https://raw.githubusercontent.com/7flash/galaxy-polkadot-contract/main/galaxy.json';
@@ -85,6 +90,8 @@ class GalaxyAPI {
     this.log(`Getting macro: "${name}"`, "getMacro");
     return macro;
   }
+
+  // TODO: ai prompts chaining re-execution, and applying radix components rendering with AI b
 
   async executeMacro(
     name: string,
@@ -692,6 +699,10 @@ return text;
     }
   }
 
+  private async drawMacro() {
+    // https://github.com/zsviczian/obsidian-excalidraw-plugin/blob/master/ea-scripts/GPT-Draw-a-UI.md
+  }
+
   private async defaultGpt4Macro(input: ExcalidrawElement, output, label: string): Promise<string> {
     const model = 'gpt-4-1106-preview';
     let denoScript;
@@ -937,10 +948,15 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
 
   for (var i = 0; i < fileIds.length; i++) {
     var fileId = fileIds[i];
-        const existingOne = await Deno.stat(GALAXY_PATH + '/' + fileId + '.png');
+            let existingOne = false;
+            try {
+        await Deno.stat(galaxyPath + '/' + fileId + '.png');             
+        existingOne = true;
+                } catch (e) {}
+ 
         if (existingOne && existingOne.isFile) continue;
     try {
-            let bufferSize = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL.length;');
+            let bufferSize = await firstWindow.script('return window.ea.getFiles()["' + fileId + '"].dataURL.length.toString();');
             bufferSize *= 4;
             bufferSize += 4;            
                         console.log('bufferSize', bufferSize);
@@ -1331,7 +1347,6 @@ async function openScene() {
                 it.containerId = newElementIds[it.containerId];
               }
               if (it.startBinding) {
-
                 it.startBinding.elementId = newElementIds[it.startBinding.elementId];
               }
               if (it.endBinding) {
