@@ -86,7 +86,10 @@ export default function(
 						}
 					}
 				} else if (element.type == 'image') {
-					// nevermind
+					for (const boundEl of element.boundElements) {
+						const arrow = elementMap[boundEl.id];
+						addMacro("VisualAI", arrow);
+					}
 				}
 				console.log('!', 'customData', JSON.stringify(element.customData));
 				// Check for customData field with macros
