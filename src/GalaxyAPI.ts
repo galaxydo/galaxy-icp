@@ -33,7 +33,7 @@ class GalaxyAPI {
 
   constructor() {
     window.gitfred = gitfred;
-    
+
     this.macros = {};
     this.callbacks = {};
     this.log("Initialized.", "constructor");
@@ -704,7 +704,7 @@ return text;
   private async drawMacro() {
     // https://github.com/zsviczian/obsidian-excalidraw-plugin/blob/master/ea-scripts/GPT-Draw-a-UI.md
   }
-  
+
   private async youtubeTranscript(input: ExcalidrawElement, output, label: string): Promise<string> {
     function loadGoogleApiLibrary() {
       return new Promise((resolve, reject) => {
@@ -715,12 +715,12 @@ return text;
         document.head.appendChild(script);
       });
     }
-    
+
     async function initializeClient() {
       try {
         // Load the Google API client library
         await loadGoogleApiLibrary();
-    
+
         // Step 2: Initialize the Google API client library
         await gapi.client.init({
           'apiKey': 'AIzaSyBxT4EZ44TDgyv_0cM7xbQLjSX2vSSU4Wk', // Replace with your actual API key
@@ -728,22 +728,22 @@ return text;
           'scope': 'https://www.googleapis.com/auth/youtube.readonly', // Adjust scope for what you need
           'discoveryDocs': ['https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest']
         });
-    
+
         // Step 3: Authenticate user (can also be triggered by a user action)
         await gapi.auth2.getAuthInstance().signIn();
-    
+
         // Step 4: Make an API call after authentication
         const response = await gapi.client.youtube.channels.list({
           'part': 'snippet,contentDetails,statistics',
           'mine': 'true'
         });
         console.log(response.result);
-    
+
       } catch (reason) {
         console.log('Error: ' + reason.result.error.message);
       }
     }
-    
+
     // Step 5: Load the API client and auth2 library
     function loadClient() {
       gapi.load('client:auth2', initializeClient);
@@ -755,46 +755,46 @@ return text;
         const match = url.match(regExp);
         return (match && match[2].length === 11) ? match[2] : null;
       }
-  
-  
-   async function getCaptions(apiKey, videoId, languageCode = 'en') {    
-  
-    try {
-      // Get the list of caption tracks
-      const captionsListResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${apiKey}`);
-      const captionsListData = await captionsListResponse.json();
-      const captionTracks = captionsListData.items;
-  
-      const track = captionTracks.find((track) => track.snippet.language === languageCode);
-      if (!track) {
-        console.log('No caption track found for the specified language.');
-        return;
-      }
-  
-      const captionsResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/captions/${track.id}?key=${apiKey}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/ttml+xml'
+
+
+      async function getCaptions(apiKey, videoId, languageCode = 'en') {
+
+        try {
+          // Get the list of caption tracks
+          const captionsListResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/captions?part=snippet&videoId=${videoId}&key=${apiKey}`);
+          const captionsListData = await captionsListResponse.json();
+          const captionTracks = captionsListData.items;
+
+          const track = captionTracks.find((track) => track.snippet.language === languageCode);
+          if (!track) {
+            console.log('No caption track found for the specified language.');
+            return;
+          }
+
+          const captionsResponse = await fetch(`https://youtube.googleapis.com/youtube/v3/captions/${track.id}?key=${apiKey}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/ttml+xml'
+            }
+          });
+          const captionsData = await captionsResponse.text();
+          console.log(captionsData);
+        } catch (error) {
+          console.error('Error fetching captions:', error);
         }
-      });
-      const captionsData = await captionsResponse.text();
-      console.log(captionsData);
-    } catch (error) {
-      console.error('Error fetching captions:', error);
+      }
+
+      const youtubeLink = input.text;
+      alert(youtubeLink);
+      const apiKey = '251790971263-nsmrbhdrkagi1na5l827ugjvh092mv75.apps.googleusercontent.com';
+      const videoId = extractVideoID(youtubeLink);
+
+      if (videoId) {
+        const captions = await getCaptions(apiKey, videoId);
+      } else {
+        console.log('Invalid YouTube URL');
+      }
     }
-  }
-  
-  const youtubeLink = input.text;
-  alert(youtubeLink);
-  const apiKey = '251790971263-nsmrbhdrkagi1na5l827ugjvh092mv75.apps.googleusercontent.com';
-  const videoId = extractVideoID(youtubeLink);
-  
-  if (videoId) {
-    const captions = await getCaptions(apiKey, videoId);
-  } else {
-    console.log('Invalid YouTube URL');
-  }
-  }
   }
 
   private async visualAiMacro(input: ExcalidrawElement, output, label: string): Promise<string> {
@@ -1174,7 +1174,33 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
     });
   }
 
-  private async defaultBashMacro(input: ExcalidrawTextElement): Promise<string> {
+
+  private async defaultBashMacro(input: ExcalidrawTextElement): Promise<string> {    
+  const script = `
+    const command = new Deno.Command(Deno.execPath(), {
+      args: [
+        "eval",
+        "console.log('Hello World')",
+      ],
+      stdin: "piped",
+      stdout: "piped",
+    });
+    const child = command.spawn();
+
+    // open a file and pipe the subprocess output to it.
+    child.stdout.pipeTo(
+      Deno.openSync("output", { write: true, create: true }).writable,
+    );
+
+    // manually close stdin
+    child.stdin.close();
+    const status = await child.status;
+
+    const s = await c.status;
+    console.log(s);`;
+  }
+
+  private async defaultBashMacroDeprecated(input: ExcalidrawTextElement): Promise<string> {
     const nit = nanoid();
     const dit = await new Promise(resolve => {
       window.webuiCallbacks[nit] = resolve;
@@ -1340,11 +1366,11 @@ console.log('dit', dit);
             if (!link) {
               link = input.name;
             }
-            
+
             if (!link) {
               throw "Galaxy link not provided.";
             }
-            
+
             this.log('! link 1 ' + link, 'open');
 
             let scene;

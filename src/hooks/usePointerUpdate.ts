@@ -86,9 +86,11 @@ export default function(
 						}
 					}
 				} else if (element.type == 'image') {
-					for (const boundEl of element.boundElements) {
-						const arrow = elementMap[boundEl.id];
-						addMacro("VisualAI", arrow);
+					if (element.boundElements) {
+						for (const boundEl of element.boundElements) {
+							const arrow = elementMap[boundEl.id];
+							addMacro("VisualAI", arrow);
+						}
 					}
 				}
 				console.log('!', 'customData', JSON.stringify(element.customData));
