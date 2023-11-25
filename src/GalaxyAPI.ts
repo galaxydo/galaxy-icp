@@ -920,7 +920,7 @@ return text;
     }
   }
 
-  private defaultDenoMacro(input: ExcalidrawElement, argument: string): Promise<ExcalidrawElement[]> {
+  public defaultDenoMacro(input: ExcalidrawElement, argument: string): Promise<ExcalidrawElement[]> {
     this.log(`Input received: ${JSON.stringify(input)}`, "defaultDenoMacro");
     try {
       if (input.type !== "text") throw "not ok";
