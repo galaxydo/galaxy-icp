@@ -810,7 +810,7 @@ return text;
         const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
     const openAI = new OpenAI({ apiKey });
 
-    let opts = { model: '', messages: [] };
+    let opts = { model: '', messages: [], max_tokens: 4000 };
     opts.model = '${model}';
     opts.messages.push({ 'role': 'system', 'content': 'Perform Instruction over given Input, respond with no comments, straight to the point' });
     opts.messages.push({ 'role': 'user', 'content': 'Input: ' });
@@ -818,7 +818,8 @@ return text;
     console.log('create completion begin', new Date());
     const completion = await openAI.chat.completions.create(opts);
     console.log('create completion done', new Date());
-    return completion.choices[0].message.content;
+    console.log(completion);
+      return completion.choices[0].message.content;
     }
     `;
     } else {
@@ -827,9 +828,9 @@ return text;
         const { OpenAI } = await import("https://deno.land/x/openai@v4.16.1/mod.ts");
     const openAI = new OpenAI({ apiKey });
 
-    let opts = { model: '', messages: [] };
+    let opts = { model: '', messages: [], max_tokens: 4000 };
     opts.model = '${model}';
-    opts.messages.push({ 'role': 'user', 'content': { "type": "image_url", "image_url": ${imageUrl} } });
+    opts.messages.push({ 'role': 'user', 'content': [{ "type": "image_url", "image_url": "${imageUrl}" }] });
     const completion = await openAI.chat.completions.create(opts);
 
     return completion.choices[0].message.content;
@@ -920,7 +921,8 @@ return text;
     }
   }
 
-  public defaultDenoMacro(input: ExcalidrawElement, argument: string): Promise<ExcalidrawElement[]> {
+
+  public defaultDenoMacro(input: ExcalidrawElement): Promise<ExcalidrawElement[]> {
     this.log(`Input received: ${JSON.stringify(input)}`, "defaultDenoMacro");
     try {
       if (input.type !== "text") throw "not ok";
@@ -929,20 +931,21 @@ return text;
       const match = macroSource.match(regex);
       const functionName = (match && match[1]) || "AnonymousDeno";
 
-      const wrappedFunction = (inputElement) => {
-        return new Promise(async (resolve, reject) => {
-          try {
-            const response = await this.executeDeno(
-              macroSource,
-              inputElement,
-            );
-            return resolve(response);
-          } catch (err) {
-            console.error(err);
-            return reject(err);
-          }
-
-        })
+      const wrappedFunction = async (input: ExcalidrawElement, output: ExcalidrawElement, label: string): Promise<string> => {
+        try {
+          const nit = nanoid();
+          let result = await new Promise(resolve => {
+            window.webuiCallbacks[nit] = resolve;
+            window.webui.executeDeno(macroSource, JSON.stringify(input), nit, JSON.stringify(output), label);
+          });
+          result = JSON.parse(result).result;
+          return result;
+        } catch (err) {
+          console.error('n25err', err);
+          ea.setToast({
+            message: `n25err: ${err}`
+          })
+        }
       };
 
       this.registerMacro(functionName, wrappedFunction);
@@ -1175,8 +1178,8 @@ const elements = await firstWindow.script('return JSON.stringify(window.ea.getSc
   }
 
 
-  private async defaultBashMacro(input: ExcalidrawTextElement): Promise<string> {    
-  const script = `
+  private async defaultBashMacro(input: ExcalidrawTextElement): Promise<string> {
+    const script = `
     const command = new Deno.Command(Deno.execPath(), {
       args: [
         "eval",

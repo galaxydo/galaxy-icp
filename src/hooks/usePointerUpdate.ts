@@ -50,12 +50,14 @@ export default function(
 						if (arrow?.type === 'arrow' && arrow?.startBinding?.elementId === element.id) {
 							let label = getArrowLabel(arrow, elementMap);
 							let macroName = label.includes('(') ? label.substr(0, label.indexOf('(')) : label;
+							if (label.startsWith('.') && outputEl.type == 'text') {
+								macroName = 'SetMetadata';
+							}
 							const outputEl = elements.find(it => it.id == arrow.endBinding?.elementId);
 							if (macroName) {
 								if (window.ga.getMacro(macroName)) {
 									addMacro(macroName, arrow, boundEl);
 								} else {
-
 									if (outputEl?.type == 'text') {
 										if (macroName.startsWith('/')) {
 											if (macroName.includes('.')) {

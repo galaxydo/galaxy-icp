@@ -21,7 +21,7 @@
     "bundle-macos-silicon": "cd desktop && BINARY_NAME=GalaxyBrowser-macos-silicon-$(cat .version) deno run --allow-all --unstable build.ts",
     "bundle-windows": "cd desktop && BINARY_NAME=GalaxyBrowser-windows-$(cat .version).exe deno run --allow-all --unstable build.ts",
     "bundle-linux": "cd desktop && BINARY_NAME=GalaxyBrowser-linux-$(cat .version) deno run --allow-all --unstable build.ts",
-    "dev-desktop": "cd desktop && DEV=true OPENAI_KEY=$(cat .openai-key) STABILITY_API_KEY=$(cat .stability-key) deno run --allow-all --unstable main.ts",
+    "dev-desktop": "cd desktop && DEV=true GOOGLE_KEY=$(cat .google-key) OPENAI_KEY=$(cat .openai-key) STABILITY_API_KEY=$(cat .stability-key) deno run --allow-all --unstable main.ts",
     "build": "vite build && cp -rf ./node_modules/@excalidraw/excalidraw/dist/excalidraw-assets ./dist && cp -rf ./node_modules/@excalidraw/excalidraw/dist/excalidraw-assets-dev ./dist",
     "pull-submodules": "git -C icp_contract checkout main && git -C icp_contract pull origin main && git -C desktop checkout main && git -C desktop pull origin main && git -C desktop/deno-webui checkout main && git -C desktop/deno-webui pull origin main && git -C desktop/dynamic-import checkout main && git -C desktop/dynamic-import pull origin main && git -C desktop/installer checkout main && git -C desktop/installer pull origin main && git -C desktop/webui checkout main && git -C desktop/webui pull origin main && git -C dist checkout main && git -C dist pull origin main && git -C excalidraw checkout master && git -C excalidraw pull origin master"
   },
